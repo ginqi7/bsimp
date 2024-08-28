@@ -32,6 +32,7 @@ DigitalOcean Spaces config example:
 
 ```toml
 [s3]
+type = "s3"
 region = "nyc3"
 endpoint = "https://nyc3.digitaloceanspaces.com"
 bucket = "foo"
@@ -44,6 +45,7 @@ secret = "SPACES SECRET"
 MinIO config example:
 ```toml
 [s3]
+type = "s3"
 region = "local"
 endpoint = "http://localhost:9000"
 bucket = "music"
@@ -52,6 +54,13 @@ force_path_style = true
 [s3.credentials]
 id = "minioadmin" 
 secret = "minioadmin"
+```
+
+Local File System
+```toml
+[s3]
+type = "local"
+endpoint = "http://localhost:9000"
 ```
 
 ## Running

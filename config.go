@@ -27,6 +27,7 @@ type S3Credentials struct {
 }
 
 type S3Config struct {
+	Type                 *string
 	Region               *string
 	Endpoint             *string
 	Bucket               string

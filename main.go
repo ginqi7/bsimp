@@ -19,14 +19,29 @@ func main() {
 		slog.Error("failed parsing confg", err, slog.String("path", configPath))
 		return
 	}
-
-	store, err := NewS3Storage(cfg.S3)
-	if err != nil {
-		slog.Error("failed initializing S3 storage", err)
-		return
+	
+	storage := UniversalStorage{}
+	
+	if *cfg.S3.Type == "local" {
+		localStore, err := NewLocalStorage(cfg.S3)
+		if err != nil {
+			slog.Error("failed initializing S3 storage", err)
+			return
+		}
+		storage.local = localStore
+	}
+	
+	if *cfg.S3.Type == "s3" {
+		s3Store, err := NewS3Storage(cfg.S3)
+		if err != nil {
+			slog.Error("failed initializing S3 storage", err)
+			return
+		}
+		storage.s3 = s3Store
 	}
 
-	mediaLib := NewMediaLibrary(store)
+	
+	mediaLib := NewMediaLibrary(&storage)
 
 	slog.Info("started HTTP server", slog.String("address", httpAddr))
 	err = StartServer(mediaLib, httpAddr)

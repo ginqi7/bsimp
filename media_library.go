@@ -2,6 +2,7 @@ package main
 
 import (
 	"sort"
+	"os"
 )
 
 type MediaListing struct {
@@ -13,10 +14,10 @@ type MediaListing struct {
 }
 
 type MediaLibrary struct {
-	store *S3Storage
+	store *UniversalStorage
 }
 
-func NewMediaLibrary(store *S3Storage) *MediaLibrary {
+func NewMediaLibrary(store *UniversalStorage) *MediaLibrary {
 	return &MediaLibrary{
 		store: store,
 	}
@@ -91,4 +92,9 @@ func (ml *MediaLibrary) List(p string) (*MediaListing, error) {
 // ContentURL returns a public URL to a file under the given path.
 func (ml *MediaLibrary) ContentURL(p string) (string, error) {
 	return ml.store.FileContentURL(p)
+}
+
+// Open an audio File
+func (ml *MediaLibrary) OpenFile(p string) (*os.File, error) {
+	return ml.store.OpenFile(p)
 }

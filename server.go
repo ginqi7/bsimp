@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"strings"
+	"path/filepath"
 )
 
 //go:embed templates static
@@ -90,6 +92,40 @@ func (s *Server) StreamHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
+func (s *Server) AudioHandler(w http.ResponseWriter, r *http.Request) {
+	// Open Audio File
+	audioFile, err := s.mediaLib.OpenFile(r.URL.Path)
+	if err != nil {
+		http.Error(w, "Unable to open audio file", http.StatusInternalServerError)
+		return
+	}
+
+
+	// Get File Info
+	fileInfo, err := audioFile.Stat()
+	if err != nil {
+		http.Error(w, "Unable to get file info", http.StatusInternalServerError)
+		return
+	}
+	// Set Content-Type
+	w.Header().Set("Content-Type", "audio/mpeg")
+
+	// Set Content-Length
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
+
+	// Set Content-Disposition (Optional, using for downloading)
+	w.Header().Set("Content-Disposition", "inline; filename="+filepath.Base(audioFile.Name()))
+
+	// Copy audio stream to response
+	_, err = io.Copy(w, audioFile)
+	defer audioFile.Close()
+	if err != nil {
+		http.Error(w, "Error streaming audio", http.StatusInternalServerError)
+		return
+	}
+}
+
+
 // Don't include sprig just for one function.
 var templateFunctions = map[string]any{
 	"defaultString": func(s string, def string) string {
@@ -126,6 +162,7 @@ func StartServer(mediaLib *MediaLibrary, addr string) error {
 	}
 	mux.Handle("/library/", http.StripPrefix("/library/", ValidatePath(NormalizePath(s.ListingHandler))))
 	mux.Handle("/stream/", http.StripPrefix("/stream/", ValidatePath(NormalizePath(s.StreamHandler))))
+	mux.Handle("/audio/", http.StripPrefix("/audio/", ValidatePath(NormalizePath(s.AudioHandler))))
 
 	return http.ListenAndServe(addr, mux)
 }
