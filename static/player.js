@@ -62,6 +62,7 @@ function initPlayer() {
     audio.play();
     buttonPlayPauseEl.classList.add("playing");
     trackEls[currentTrackIdx].classList.add("playing");
+    trackEls[currentTrackIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function pause() {
