@@ -113,6 +113,10 @@ func (s *Server) AudioHandler(w http.ResponseWriter, r *http.Request) {
 	// Set Content-Length
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
 
+	// Set Accept-Ranges, for Chrome setting `currentTime' 
+	// reference: https://segmentfault.com/q/1010000002908474
+	w.Header().Set("Accept-Ranges", "bytes")
+
 	// Set Content-Disposition (Optional, using for downloading)
 	w.Header().Set("Content-Disposition", "inline; filename="+filepath.Base(audioFile.Name()))
 
