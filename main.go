@@ -42,8 +42,8 @@ func main() {
 
 	
 	mediaLib := NewMediaLibrary(&storage)
-
+	authLib := NewAuthLibrary(cfg)
 	slog.Info("started HTTP server", slog.String("address", httpAddr))
-	err = StartServer(mediaLib, httpAddr)
+	err = StartServer(mediaLib, authLib, httpAddr)
 	slog.Error("failed starting HTTP server", err)
 }

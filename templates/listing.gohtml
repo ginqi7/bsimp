@@ -1,80 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>{{ .CurrentDirectory.Name }}</title>
-	{{ if .Cover }}
-	<link rel="icon" href="/stream/{{ .Cover.Path }}">
-	{{ else }}
-	<link rel="icon" href="/static/{{ .StaticVersion }}/favicon.svg">
-	{{ end }}
-	{{/* SVG icons used in the stylesheet https://github.com/ionic-team/ionicons */}}
-	<link rel="stylesheet" href="/static/{{ .StaticVersion }}/style.css">
-	<script src="/static/{{ .StaticVersion }}/player.js"></script>
-	
-	{{/* PWA Config */}}
-	<link rel="manifest" href="/static/{{ .StaticVersion }}/manifest.json" />	
-	<meta name="mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <title>{{ .CurrentDirectory.Name }}</title>
+    {{ if .Cover }}
+    <link rel="icon" href="/stream/{{ .Cover.Path }}">
+    {{ else }}
+    <link rel="icon" href="/static/{{ .StaticVersion }}/favicon.svg">
+    {{ end }}
+    {{/* SVG icons used in the stylesheet https://github.com/ionic-team/ionicons */}}
+    <link rel="stylesheet" href="/static/{{ .StaticVersion }}/style.css">
+    <script src="/static/{{ .StaticVersion }}/player.js"></script>
+    
+    {{/* PWA Config */}}
+    <link rel="manifest" href="/static/{{ .StaticVersion }}/manifest.json" />	
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-</head>
+  </head>
 
-<body>
+  <body>
 
-<div class="path">
-	{{ range $dir := .CurrentDirectory.Parents }}
-		<a href="/library/{{ $dir.Path }}">{{ defaultString $dir.Name "Music" }}</a> /
-	{{ end }}
-	{{ defaultString .CurrentDirectory.Name "Music" }}
-</div>
+    <div class="path">
+      {{ range $dir := .CurrentDirectory.Parents }}
+      <a href="/library/{{ $dir.Path }}">{{ defaultString $dir.Name "Audio" }}</a> /
+      {{ end }}
+      {{ defaultString .CurrentDirectory.Name "Audio" }}
+    </div>
 
-{{ if .Cover }}
-<div class="cover">
-	<img src="/stream/{{ .Cover.Path }}" alt="Cover">
-</div>
-{{ end }}
+    {{ if .Cover }}
+    <div class="cover">
+      <img src="/stream/{{ .Cover.Path }}" alt="Cover">
+    </div>
+    {{ end }}
 
-{{ if .AudioTracks }}
-<div class="player">
-  <div class="title"></div>
+    {{ if .AudioTracks }}
+    <div class="player">
+      <div class="title"></div>
 
-  <div class="controls">
-    <span title="Play/Pause" class="button-playpause"></span>
-    <span class="time-elapsed">00:00</span>
-    <input class="progressbar" type="range" value="0" min="0" max="100" step="1">
-    <span class="time-total">00:00</span>
-    <span title="Previous" class="button-prev disabled"></span>
-    <span title="Next" class="button-next disabled"></span>
-  </div>
-</div>
-{{ end }}
+      <div class="controls">
+	<span title="Play/Pause" class="button-playpause"></span>
+	<span class="time-elapsed">00:00</span>
+	<input class="progressbar" type="range" value="0" min="0" max="100" step="1">
+	<span class="time-total">00:00</span>
+	<span title="Previous" class="button-prev disabled"></span>
+	<span title="Next" class="button-next disabled"></span>
+      </div>
+    </div>
+    {{ end }}
 
-{{ if or .AudioTracks (or .Files .Directories) }}
-<div class="table">
-	{{ range $index, $track := .AudioTracks }}
-		<div class="row track" data-url="/stream/{{ $track.Path }}"
-			data-title="{{ $track.FriendlyName}}" data-index="{{ $index }}">
-			<span class="icon button-track-playpause"></span>
-			{{ $track.FriendlyName}}
-		</div>
-	{{ end }}
-	{{ range $dir := .Directories }}
-		<a class="row" href="/library/{{ $dir.Path }}">
-			<span class="icon folder"></span>
-			{{ $dir.Name }}
-		</a>
-	{{ end }}
-	{{ range $file := .Files }}
-		<a class="row" href="/stream/{{ $file.Path }}" target="_blank">
-			<span class="icon file"></span>
-			{{ $file.Name }}
-		</a>
-	{{ end }}
-</div>
-{{ end }}
+    {{ if or .AudioTracks (or .Files .Directories) }}
+    <div class="table">
+      {{ range $index, $track := .AudioTracks }}
+      <div class="row track" data-url="/stream/{{ $track.Path }}"
+	   data-title="{{ $track.FriendlyName}}" data-index="{{ $index }}">
+	<span class="icon button-track-playpause"></span>
+	{{ $track.FriendlyName}}
+      </div>
+      {{ end }}
+      {{ range $dir := .Directories }}
+      <a class="row" href="/library/{{ $dir.Path }}">
+	<span class="icon folder"></span>
+	{{ $dir.Name }}
+      </a>
+      {{ end }}
+      {{ range $file := .Files }}
+      <a class="row" href="/stream/{{ $file.Path }}" target="_blank">
+	<span class="icon file"></span>
+	{{ $file.Name }}
+      </a>
+      {{ end }}
+    </div>
+    {{ end }}
 
-</body>
+  </body>
 
 </html>

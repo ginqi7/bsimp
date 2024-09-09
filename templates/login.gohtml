@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+	<title>Login</title>
+	<link rel="icon" href="/static/{{ .StaticVersion }}/favicon.svg">
+	{{/* SVG icons used in the stylesheet https://github.com/ionic-team/ionicons */}}
+	<link rel="stylesheet" href="/static/{{ .StaticVersion }}/style.css">
+	{{/* PWA Config */}}
+	<link rel="manifest" href="/static/{{ .StaticVersion }}/manifest.json" />	
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	
+	<script src="/static/{{ .StaticVersion }}/md5.js"></script>
+	<script>
+        function encryptPassword(event) {
+            event.preventDefault();
+            var password = document.getElementById('password').value;
+            var md5Password = md5(password)
+            document.getElementById('password').value = md5Password;
+            document.getElementById('login').submit();
+        }
+	</script>
+    </head>
+    <body>
+	<div class="login-container">
+            <h2>Login</h2>
+            <form action="/login" method="POST" id="login"  onsubmit="encryptPassword(event)">
+		<label for="password"></label>
+		<input type="password" id="password" name="password" placeholder="Enter your password" required>
+		<input type="submit" value="Login">
+            </form>
+	</div>
+
+    </body>
+</html>

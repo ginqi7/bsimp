@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strings"
 	"path/filepath"
+	"time"
 )
 
 //go:embed templates static
@@ -19,6 +20,7 @@ var embedFS embed.FS
 
 type Server struct {
 	mediaLib      *MediaLibrary
+	authLib       *AuthLibrary
 	tmpl          *template.Template
 	staticVersion string
 }
@@ -33,8 +35,15 @@ func httpError(r *http.Request, w http.ResponseWriter, err error, code int) {
 }
 
 // ValidatePath provides a basic protection from the path traversal vulnerability.
-func ValidatePath(h http.HandlerFunc) http.HandlerFunc {
+func (s *Server)ValidatePath(h http.HandlerFunc) http.HandlerFunc {
+
 	return func(w http.ResponseWriter, r *http.Request) {
+		error := s.authLib.checkCookie(r)
+		if error != nil {
+			fmt.Println(error)
+			http.Redirect(w, r, "/login_page/", http.StatusFound)
+			// http.RedirectHandler("/login/", http.StatusMovedPermanently)
+		}
 		if strings.Contains(r.URL.Path, "./") || strings.Contains(r.URL.Path, ".\\") {
 			httpError(r, w, errors.New("invalid path"), http.StatusBadRequest)
 			return
@@ -82,6 +91,36 @@ func (s *Server) ListingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (s *Server) LoginPage(w http.ResponseWriter, r *http.Request) {
+	tmplData := TemplateData{
+		StaticVersion: s.staticVersion,
+	}
+	if err := s.tmpl.ExecuteTemplate(w, "login.gohtml", tmplData); err != nil {
+		httpError(r, w, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	password := r.FormValue("password")
+	cookie := &http.Cookie{
+		Name:     "password",
+		Value:    password,
+		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
+	}
+	
+	http.SetCookie(w, cookie)
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+
 
 func (s *Server) StreamHandler(w http.ResponseWriter, r *http.Request) {
 	url, err := s.mediaLib.ContentURL(r.URL.Path)
@@ -141,14 +180,14 @@ var templateFunctions = map[string]any{
 }
 
 // StartServer starts HTTP server.
-func StartServer(mediaLib *MediaLibrary, addr string) error {
+func StartServer(mediaLib *MediaLibrary, authLib *AuthLibrary, addr string) error {
 	tmpl, err := template.New("").Funcs(templateFunctions).ParseFS(embedFS, "templates/*.gohtml")
 	if err != nil {
 		return err
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/", http.RedirectHandler("/library/", http.StatusMovedPermanently))
+
 
 	staticVersion := fmt.Sprintf("%x", rand.Uint64())
 	staticFS, err := fs.Sub(embedFS, "static")
@@ -160,12 +199,16 @@ func StartServer(mediaLib *MediaLibrary, addr string) error {
 
 	s := Server{
 		mediaLib:      mediaLib,
+		authLib: authLib,
 		tmpl:          tmpl,
 		staticVersion: staticVersion,
 	}
-	mux.Handle("/library/", http.StripPrefix("/library/", ValidatePath(NormalizePath(s.ListingHandler))))
-	mux.Handle("/stream/", http.StripPrefix("/stream/", ValidatePath(NormalizePath(s.StreamHandler))))
-	mux.Handle("/audio/", http.StripPrefix("/audio/", ValidatePath(NormalizePath(s.AudioHandler))))
+	mux.Handle("/library/", http.StripPrefix("/library/", s.ValidatePath(NormalizePath(s.ListingHandler))))
+	mux.Handle("/stream/", http.StripPrefix("/stream/", s.ValidatePath(NormalizePath(s.StreamHandler))))
+	mux.Handle("/audio/", http.StripPrefix("/audio/", s.ValidatePath(NormalizePath(s.AudioHandler))))
+	mux.Handle("/login_page/", http.StripPrefix("/login_page/", NormalizePath(s.LoginPage)))
+	mux.Handle("/login", http.StripPrefix("/login", NormalizePath(s.LoginHandler)))
+	mux.Handle("/", http.RedirectHandler("/library/", http.StatusMovedPermanently))
 
 	return http.ListenAndServe(addr, mux)
 }
