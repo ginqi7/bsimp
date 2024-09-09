@@ -1,18 +1,18 @@
 /* Global */
 body {
   font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
-  min-width: 22rem;
   font-size: 1.125rem;
-  margin: auto;
+    width: 95%;           /* 设置宽度为屏幕的 80% */
+    margin: 0 auto;       /* 让它水平居中 */
   overflow: hidden;
 }
 
 @media only screen and (min-width: 768px) {
   body {
-    max-width: 38rem;
-    font-size: 1rem;
-    margin: auto
-    overflow: hidden;
+      width: 80%;           /* 设置宽度为屏幕的 80% */
+      margin: 0 auto;       /* 让它水平居中 */
+      /* background-color: lightgray; /\* 背景颜色只是为了更好地可视化 *\/ */
+      font-size: 1rem;
   }
 }
 
@@ -20,7 +20,7 @@ body {
 .table {
   margin: 1.125rem 0 0 0;
   border-top: thin solid grey;
-  height: 65vh;
+  height: 70vh;
   overflow: auto;
 }
 
@@ -76,9 +76,17 @@ body {
 }
 
 /* Main player controls */
+@media only screen and (max-width: 768px) {
+  .player {
+    position: fixed; 
+    bottom: 0;       
+    width: 90%;     
+  }
+}
+
 .controls {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
 }
 
 .time-elapsed,

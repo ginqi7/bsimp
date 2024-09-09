@@ -148,7 +148,6 @@ func StartServer(mediaLib *MediaLibrary, addr string) error {
 	}
 
 	mux := http.NewServeMux()
-
 	mux.Handle("/", http.RedirectHandler("/library/", http.StatusMovedPermanently))
 
 	staticVersion := fmt.Sprintf("%x", rand.Uint64())
