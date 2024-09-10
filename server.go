@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"io"
 	"io/fs"
 	"log/slog"
 	"math/rand"
 	"net/http"
 	"strings"
-	"path/filepath"
 	"time"
+	"strconv"
 )
 
 //go:embed templates static
@@ -134,11 +133,11 @@ func (s *Server) StreamHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) AudioHandler(w http.ResponseWriter, r *http.Request) {
 	// Open Audio File
 	audioFile, err := s.mediaLib.OpenFile(r.URL.Path)
+	defer audioFile.Close()
 	if err != nil {
 		http.Error(w, "Unable to open audio file", http.StatusInternalServerError)
 		return
 	}
-
 
 	// Get File Info
 	fileInfo, err := audioFile.Stat()
@@ -146,26 +145,51 @@ func (s *Server) AudioHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to get file info", http.StatusInternalServerError)
 		return
 	}
+	rangeHeader := r.Header.Get("Range")
+	
+	if rangeHeader != "" {
+		var start, end int64
+		_, err := fmt.Sscanf(rangeHeader, "bytes=%d-%d", &start, &end)
+		if err != nil {
+			_, err = fmt.Sscanf(rangeHeader, "bytes=%d-", &start,)
+			end = 0
+			if err != nil {
+				http.Error(w, "Invalid Range", http.StatusRequestedRangeNotSatisfiable)
+				return
+			}
+		}
+		fileSize := fileInfo.Size()
+		if start >= fileSize || end >= fileSize {
+			http.Error(w, "Requested range not satisfiable", http.StatusRequestedRangeNotSatisfiable)
+			return
+		}
+
+		if end < 0 || end == 0 {
+			end = fileSize - 1
+		}
+		
+		chunkSize := end - start + 1
+			
+		// Set Content-Range
+		w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, fileSize))
+		w.Header().Set("Content-Length", strconv.FormatInt(chunkSize, 10))
+		w.WriteHeader(http.StatusPartialContent)
+		audioFile.Seek(start, 0)
+		buffer := make([]byte, chunkSize)
+		audioFile.Read(buffer)
+		w.Write(buffer)
+	} else {
+		// Set Content-Length
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
+		w.WriteHeader(http.StatusOK)
+		http.ServeContent(w, r, fileInfo.Name(), fileInfo.ModTime(), audioFile)
+	}
+					
 	// Set Content-Type
 	w.Header().Set("Content-Type", "audio/mpeg")
-
-	// Set Content-Length
-	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileInfo.Size()))
-
 	// Set Accept-Ranges, for Chrome setting `currentTime' 
 	// reference: https://segmentfault.com/q/1010000002908474
 	w.Header().Set("Accept-Ranges", "bytes")
-
-	// Set Content-Disposition (Optional, using for downloading)
-	w.Header().Set("Content-Disposition", "inline; filename="+filepath.Base(audioFile.Name()))
-
-	// Copy audio stream to response
-	_, err = io.Copy(w, audioFile)
-	defer audioFile.Close()
-	if err != nil {
-		http.Error(w, "Error streaming audio", http.StatusInternalServerError)
-		return
-	}
 }
 
 

@@ -6,37 +6,22 @@ function fmtTime(s) {
     return d.toISOString().slice(14, 19);
 }
 
-var audio = new Audio();
+var audio = document.querySelector("audio")
 
 var titleEl;
-var buttonPlayPauseEl;
-var progressEl;
-var timeElapsedEl;
-var timeTotalEl;
-var buttonPrevEl;
-var buttonNextEl;
 var coverImgEl;
 var trackEls;
 var currentTrackIdx;
 
 function setTrack(idx) {
+    trackEls[currentTrackIdx].classList.remove("currentTrack");
     currentTrackIdx = idx;
     const trackEl = trackEls[idx];
+    trackEls[currentTrackIdx].classList.add("currentTrack");
     audio.src = trackEl.dataset.url;
+    audio.title = trackEl.dataset.title;
     titleEl.innerText = trackEl.dataset.title;
-
-    if (idx == 0) {
-	buttonPrevEl.classList.add("disabled");
-    } else {
-	buttonPrevEl.classList.remove("disabled");
-    }
-
-    if (idx == trackEls.length - 1) {
-	buttonNextEl.classList.add("disabled");
-    } else {
-	buttonNextEl.classList.remove("disabled");
-    }
-
+    
     if ('mediaSession' in navigator) {
 	let meta = {
             title: trackEl.dataset.title,
@@ -54,30 +39,23 @@ function setTrack(idx) {
 function play() {
     audio.currentTime = lastElementTime();
     audio.play();
-    buttonPlayPauseEl.classList.add("playing");
     trackEls[currentTrackIdx].classList.add("playing");
-    trackEls[currentTrackIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function pause() {
     audio.pause();
-    buttonPlayPauseEl.classList.remove("playing");
     trackEls[currentTrackIdx].classList.remove("playing");
 }
 
 function prev() {
-    if (buttonPrevEl.classList.contains("disabled")) {
-	return;
-    }
+
     pause();
     setTrack(currentTrackIdx - 1);
     play();
 }
 
 function next() {
-    if (buttonNextEl.classList.contains("disabled")) {
-	return;
-    }
+
     pause();
     setTrack(currentTrackIdx + 1);
     play();
@@ -105,12 +83,8 @@ function saveElementTime() {
 
 function initPlayer() {
     titleEl = document.querySelector(".title");
-    buttonPlayPauseEl = document.querySelector(".button-playpause");
-    progressEl = document.querySelector("input[type='range']");
-    timeElapsedEl = document.querySelector(".time-elapsed");
-    timeTotalEl = document.querySelector(".time-total");
-    buttonPrevEl = document.querySelector(".button-prev");
-    buttonNextEl = document.querySelector(".button-next");
+    audio = document.querySelector("audio")
+
     coverImgEl = document.querySelector(".cover > img");
     trackEls = document.querySelectorAll(".track");
     if (trackEls.length == 0) {
@@ -118,24 +92,15 @@ function initPlayer() {
     }
     currentTrackIdx = 0;
 
-    if (trackEls.length > 1) {
-	buttonNextEl.classList.remove("disabled");
-    }    
     setTrack(lastTrack());
 
     let mouseDownOnSlider = false;
 
-    audio.addEventListener("loadeddata", () => {
-	progressEl.value = 0;
-    });
     audio.addEventListener("timeupdate", () => {
 	if (mouseDownOnSlider || !audio.duration) {
 	    return;
 	}
 	saveElementTime()
-	progressEl.value = audio.currentTime / audio.duration * 100;
-	timeElapsedEl.textContent = fmtTime(audio.currentTime);
-	timeTotalEl.textContent = fmtTime(audio.duration);
     });
     audio.addEventListener("ended", () => {
 	pause();
@@ -145,35 +110,13 @@ function initPlayer() {
 	}
     });
     audio.addEventListener("pause", () => {
-	buttonPlayPauseEl.classList.remove("playing");
 	trackEls[currentTrackIdx].classList.remove("playing");
     });
     audio.addEventListener("play", () => {
-	buttonPlayPauseEl.classList.add("playing");
 	trackEls[currentTrackIdx].classList.add("playing");
+	trackEls[currentTrackIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
-    buttonPlayPauseEl.addEventListener("click", () => {
-	if (audio.paused) {
-	    play();
-	} else {
-	    pause();
-	}
-    });
-
-    progressEl.addEventListener("change", () => {
-	const pct = progressEl.value / 100;
-	audio.currentTime = (audio.duration || 0) * pct;
-    });
-    progressEl.addEventListener("mousedown", () => {
-	mouseDownOnSlider = true;
-    });
-    progressEl.addEventListener("mouseup", () => {
-	mouseDownOnSlider = false;
-    });
-
-    buttonPrevEl.addEventListener("click", prev);
-    buttonNextEl.addEventListener("click", next);
 
     if ('mediaSession' in navigator) {
 	// mediaSession is flaky in Chrome https://bugs.chromium.org/p/chromium/issues/detail?id=1337536
@@ -202,6 +145,14 @@ function initPlayer() {
 	setTrack(targetIdx);
 	play();
     }));
+    
+    titleEl.addEventListener("click", event => {
+	if (audio.paused) {
+	    audio.play();
+	} else {
+	    audio.pause();
+	}
+    })
 }
 
 window.addEventListener("DOMContentLoaded", initPlayer);

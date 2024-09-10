@@ -1,87 +1,111 @@
 /* Global */
 body {
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
-  font-size: 1.125rem;
-    width: 95%;           /* 设置宽度为屏幕的 80% */
-    margin: 0 auto;       /* 让它水平居中 */
-  overflow: hidden;
+    font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+    font-size: 1.125rem;
+    width: 95%;           
+    margin: 0 auto;       
+    overflow: hidden;
 }
 
 @media only screen and (min-width: 768px) {
-  body {
-      width: 80%;           /* 设置宽度为屏幕的 80% */
-      margin: 0 auto;       /* 让它水平居中 */
-      /* background-color: lightgray; /\* 背景颜色只是为了更好地可视化 *\/ */
-      font-size: 1rem;
-  }
+    body {
+	width: 80%;           
+	margin: 0 auto;       
+	font-size: 1rem;
+    }
 }
 
 /* Directory listing and playlist tables */
 .table {
-  margin: 1.125rem 0 0 0;
-  border-top: thin solid grey;
-  height: 70vh;
-  overflow: auto;
+    margin: 1.125rem 0 0;
+    height: 75vh;
+    overflow: auto;
+}
+
+.row.currentTrack {
+    border: solid grey;
 }
 
 .row {
-  border-bottom: thin solid grey;
-  padding: 0.625rem 0 0.563rem;
-  display: block;
-  color: inherit;
-  text-decoration: inherit;
-  cursor: pointer;
+    border: thin dashed grey;
+    padding: 0.625rem 0 0.563rem;
+    display: block;
+    color: inherit;
+    text-decoration: inherit;
+    cursor: pointer;
 }
 
 .icon {
-  padding-left: 2rem;
-  background: center/1rem no-repeat;
+    padding-left: 2rem;
+    background: center/1rem no-repeat;
 }
 
 .icon.folder {
-  background-image: url("folder.svg");
+    background-image: url("folder.svg");
 }
 
 .icon.file {
-  background-image: url("document.svg");
+    background-image: url("document.svg");
 }
 
 .track>.icon.button-track-playpause {
-  background-image: url("play.svg");
+    background-image: url("play.svg");
 }
 
 .track.playing>.icon.button-track-playpause {
-  background-image: url("pause.svg");
+    background-image: url("pause.svg");
 }
 
 /* Cover */
 .cover {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 1.25rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1.25rem;
 }
 
 .cover>img {
-  width: 22rem;
-  max-width: 100%;
+    width: 22rem;
+    max-width: 100%;
 }
 
 /* Title */
 .title {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 1.25rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.5rem;
+    cursor: pointer;
+}
+
+.path {
+    margin-top: 0.5rem;
+}
+
+.player {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border: thin solid grey;
+    border-radius: 15px; 
 }
 
 /* Main player controls */
 @media only screen and (max-width: 768px) {
-  .player {
-    position: fixed; 
-    bottom: 0;       
-    width: 90%;     
-  }
+    .player {
+	position: fixed; 
+	bottom: 0;
+	width: 95%;     
+	background-color: white;
+    }
+}
+
+audio {
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+audio::-webkit-media-controls-panel {
+    background: white;
 }
 
 .controls {
@@ -91,46 +115,46 @@ body {
 
 .time-elapsed,
 .time-total {
-  padding: 0 0.25rem 0 0.25rem;
+    padding: 0 0.25rem;
 }
 
 .progressbar {
-  flex-grow: 1;
+    flex-grow: 1;
 }
 
 .button-playpause {
-  width: 3rem;
-  height: 3rem;
-  display: inline-block;
-  vertical-align: middle;
-  background: url("play.svg") center/3rem no-repeat;
+    width: 3rem;
+    height: 3rem;
+    display: inline-block;
+    vertical-align: middle;
+    background: url("play.svg") center/3rem no-repeat;
 }
 
 .button-playpause.playing {
-  background: url("pause.svg") center/3rem no-repeat;
+    background: url("pause.svg") center/3rem no-repeat;
 }
 
 .button-prev,
 .button-next {
-  width: 2rem;
-  height: 2rem;
-  display: inline-block;
-  vertical-align: middle;
+    width: 2rem;
+    height: 2rem;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .button-prev {
-  background: url("play-skip-back.svg") center/1.5rem no-repeat;
+    background: url("play-skip-back.svg") center/1.5rem no-repeat;
 }
 
 .button-next {
-  background: url("play-skip-forward.svg") center/1.5rem no-repeat;
+    background: url("play-skip-forward.svg") center/1.5rem no-repeat;
 }
 
 span[class^="button-"] {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 span[class^="button-"].disabled {
-  opacity: .4;
-  cursor: unset;
+    opacity: .4;
+    cursor: unset;
 }
