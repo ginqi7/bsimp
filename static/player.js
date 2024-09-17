@@ -123,7 +123,6 @@ function initPlayer() {
 	navigator.mediaSession.setActionHandler('previoustrack', prev);
 	navigator.mediaSession.setActionHandler('nexttrack', next);
 	navigator.mediaSession.setActionHandler('pause', pause);
-	// not working in ios pwa
 	navigator.mediaSession.setActionHandler('play', play);
 	navigator.mediaSession.setActionHandler('seekto', function (data) {
 	    audio.currentTime = data.seekTime;
