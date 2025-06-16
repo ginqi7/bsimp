@@ -1,20 +1,21 @@
 # Bsimp
 
-Bsimp is a minimalistic S3-backed audio library. It lets you play audio files from an S3 bucket with any arbitrary directory structure.
+Bsimp is a minimalist audio library with multiple back-ends. It allows you to play audio files from an storage with any arbitrary directory structure.
 
-It works with AWS S3 or any S3 API compatible storage such as DigitalOcean Spaces, Backblaze B2, Cloudflare R2 or MinIO.
+It works with local storage or any S3 API compatible storage such as  AWS S3, DigitalOcean Spaces, Backblaze B2, Cloudflare R2 or MinIO.
 
 ## Why
+I need a straightforward audio player to listen to my personal audiobooks and music. I store these audio files on my personal NAS so I can play them anywhere.
 
-Over the years I acquired a large library of audio files from different sources - Bandcamp, Google Music and I even ripped some CDs myself a decade ago. I wanted a way to listen my audio files from different devices and also have them backed up reliably on cloud storage. S3 solves both of these problems - it serves as a live audio library and as a backup at the same time.
-
-I didn't want to go with the existing [open source](https://github.com/awesome-selfhosted/awesome-selfhosted#media-streaming---audio-streaming) audio streaming services. I found them resource-heavy, having many dependencies and features I would never use.
+I find the original [bsimp](https://github.com/akrylysov/bsimp) project to be excellent, so I forked it to meet some of my personal requirements.
 
 ## Features
-
+- Various back-ends such as local file systems or S3
 - Cover art support
 - Responsive design
-- Stateless - no database required
+- Sync global play progress rate
+- Simplest password login
+- Docker deployment
 
 ## Screenshots
 
@@ -52,7 +53,7 @@ bucket = "music"
 force_path_style = true
 
 [s3.credentials]
-id = "minioadmin" 
+id = "minioadmin"
 secret = "minioadmin"
 ```
 
@@ -69,15 +70,6 @@ endpoint = "http://localhost:9000"
 bsimp -config=/etc/bsimp/config.toml -http=":8080"
 ```
 
-## Security
-
-Bsimp doesn't have built-in authentication or rate-limiting. The server should never be exposed to the Internet directly to avoid unexpected S3 bills.
-
-When exposed to the Internet, the server should run behind a full-fledged web server like Nginx with the following features enabled:
-- HTTPS
-- Authentication
-- Rate Limiting
-
 ## FAQ
 
 ### What audio formats does it support?
@@ -90,7 +82,7 @@ No, but the web interface works well on mobile phones. The Media Session API let
 
 ### Does it support playlists?
 
-No, Bsimp follows the S3 bucket directory structure.
+No, Bsimp follows the directory structure.
 
 ### Does it support transcoding?
 
