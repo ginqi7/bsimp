@@ -1,74 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
-
   <head>
     <title>{{ .CurrentDirectory.Name }}</title>
     {{ if .Cover }}
-    <link rel="icon" href="/stream/{{ .Cover.Path }}">
+    <link rel="icon" href="/stream/{{ .Cover.Path }}" />
     {{ else }}
-    <link rel="icon" href="/static/{{ .StaticVersion }}/favicon.svg">
-    {{ end }}
-    {{/* SVG icons used in the stylesheet https://github.com/ionic-team/ionicons */}}
-    <link rel="stylesheet" href="/static/{{ .StaticVersion }}/style.css">
+    <link rel="icon" href="/static/{{ .StaticVersion }}/favicon.svg" />
+    {{ end }} {{/* SVG icons used in the stylesheet
+    https://github.com/ionic-team/ionicons */}}
+    <link rel="stylesheet" href="/static/{{ .StaticVersion }}/style.css" />
     <script src="/static/{{ .StaticVersion }}/player.js"></script>
-    
-    {{/* PWA Config */}}
-    <link rel="manifest" href="/static/{{ .StaticVersion }}/manifest.json" />	
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="/static/{{ .StaticVersion }}/request.js"></script>
 
+    {{/* PWA Config */}}
+    <link rel="manifest" href="/static/{{ .StaticVersion }}/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
   </head>
 
   <body>
-
     <div class="path">
       {{ range $dir := .CurrentDirectory.Parents }}
-      <a href="/library/{{ $dir.Path }}">{{ defaultString $dir.Name "Audio" }}</a> /
-      {{ end }}
-      {{ defaultString .CurrentDirectory.Name "Audio" }}
+      <a href="/library/{{ $dir.Path }}"
+        >{{ defaultString $dir.Name "Audio" }}</a
+      >
+      / {{ end }} {{ defaultString .CurrentDirectory.Name "Audio" }}
     </div>
 
     {{ if .Cover }}
     <div class="cover">
-      <img src="/stream/{{ .Cover.Path }}" alt="Cover">
+      <img src="/stream/{{ .Cover.Path }}" alt="Cover" />
     </div>
-    {{ end }}
-
-    {{ if .AudioTracks }}
+    {{ end }} {{ if .AudioTracks }}
 
     <div class="player">
       <div class="title"></div>
       <div class="controls">
-	<audio preload="auto" controls></audio>
-	</div>
+        <audio preload="auto" controls></audio>
+      </div>
     </div>
-    {{ end }}
-
-    {{ if or .AudioTracks (or .Files .Directories) }}
+    {{ end }} {{ if or .AudioTracks (or .Files .Directories) }}
     <div class="table">
       {{ range $index, $track := .AudioTracks }}
-      <div class="row track" data-url="/stream/{{ $track.Path }}"
-	   data-title="{{ $track.FriendlyName}}" data-index="{{ $index }}">
-	<span class="icon button-track-playpause"></span>
-	{{ $track.FriendlyName}}
+      <div
+        class="row track"
+        data-url="/stream/{{ $track.Path }}"
+        data-title="{{ $track.FriendlyName}}"
+        data-index="{{ $index }}"
+      >
+        <span class="icon button-track-playpause"></span>
+        {{ $track.FriendlyName}}
       </div>
-      {{ end }}
-      {{ range $dir := .Directories }}
+      {{ end }} {{ range $dir := .Directories }}
       <a class="row" href="/library/{{ $dir.Path }}">
-	<span class="icon folder"></span>
-	{{ $dir.Name }}
+        <span class="icon folder"></span>
+        {{ $dir.Name }}
       </a>
-      {{ end }}
-      {{ range $file := .Files }}
+      {{ end }} {{ range $file := .Files }}
       <a class="row" href="/stream/{{ $file.Path }}" target="_blank">
-	<span class="icon file"></span>
-	{{ $file.Name }}
+        <span class="icon file"></span>
+        {{ $file.Name }}
       </a>
       {{ end }}
     </div>
     {{ end }}
-
   </body>
-
 </html>

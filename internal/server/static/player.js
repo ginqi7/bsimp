@@ -1,12 +1,12 @@
 function fmtTime(s) {
     const d = new Date(s * 1000);
     if (s > 600) {
-	return d.toISOString().slice(11, 19);
+        return d.toISOString().slice(11, 19);
     }
     return d.toISOString().slice(14, 19);
 }
 
-var audio = document.querySelector("audio")
+var audio = document.querySelector("audio");
 
 var titleEl;
 var coverImgEl;
@@ -21,137 +21,167 @@ function setTrack(idx) {
     audio.src = trackEl.dataset.url;
     audio.title = trackEl.dataset.title;
     titleEl.innerText = trackEl.dataset.title;
-    
-    if ('mediaSession' in navigator) {
-	let meta = {
+
+    if ("mediaSession" in navigator) {
+        let meta = {
             title: trackEl.dataset.title,
             artist: "",
-            album: ""
-	};
-	if (coverImgEl) {
-            meta.artwork = [{ src: coverImgEl.src }]
-	}
-	navigator.mediaSession.metadata = new MediaMetadata(meta);
+            album: "",
+        };
+        if (coverImgEl) {
+            meta.artwork = [{ src: coverImgEl.src }];
+        }
+        navigator.mediaSession.metadata = new MediaMetadata(meta);
     }
-    saveTrack()
+    saveTrack();
 }
 
 function play() {
-    audio.currentTime = lastElementTime();
-    audio.play();
-    trackEls[currentTrackIdx].classList.add("playing");
+    lastElementTime((time) => {
+        audio.play();
+        trackEls[currentTrackIdx].classList.add("playing");
+        audio.currentTime = time;
+    });
 }
 
 function pause() {
+    console.log("Fuck1");
     audio.pause();
     trackEls[currentTrackIdx].classList.remove("playing");
 }
 
 function prev() {
-
     pause();
     setTrack(currentTrackIdx - 1);
     play();
 }
 
 function next() {
-
     pause();
     setTrack(currentTrackIdx + 1);
     play();
 }
 
-function lastTrack() {
-    var idx = localStorage.getItem(window.location.pathname);
-    return idx == null ? 0 : idx;
+function lastTrack(callback) {
+    var data = sendRequest(
+        "getTrack",
+        window.location.pathname,
+        parseInt(currentTrackIdx),
+        audio.currentTime,
+        (data) => callback(data.trackIdx),
+    );
 }
 
 function saveTrack() {
-    localStorage.setItem(window.location.pathname, currentTrackIdx);
+    // localStorage.setItem(window.location.pathname, currentTrackIdx);
+    sendRequest(
+        "saveTrack",
+        window.location.pathname,
+        parseInt(currentTrackIdx),
+        audio.currentTime,
+        (data) => console.log(),
+    );
 }
 
-function lastElementTime() {
-    var time = localStorage.getItem(`${window.location.pathname}:${currentTrackIdx}`);
-    return time == null ? 0 : time;
+function lastElementTime(callback) {
+    sendRequest(
+        "getTime",
+        window.location.pathname,
+        parseInt(currentTrackIdx),
+        audio.currentTime,
+        (data) => callback(data.currentTime),
+    );
 }
 
 function saveElementTime() {
-    localStorage.setItem(`${window.location.pathname}:${currentTrackIdx}`, audio.currentTime);
+    sendRequest(
+        "saveTime",
+        window.location.pathname,
+        parseInt(currentTrackIdx),
+        audio.currentTime,
+        (data) => console.log(),
+    );
+    // localStorage.setItem(
+    //     `${window.location.pathname}:${currentTrackIdx}`,
+    //     audio.currentTime,
+    // );
 }
-
-
 
 function initPlayer() {
     titleEl = document.querySelector(".title");
-    audio = document.querySelector("audio")
+    audio = document.querySelector("audio");
 
     coverImgEl = document.querySelector(".cover > img");
     trackEls = document.querySelectorAll(".track");
     if (trackEls.length == 0) {
-	return;
+        return;
     }
     currentTrackIdx = 0;
-
-    setTrack(lastTrack());
+    lastTrack(setTrack);
 
     let mouseDownOnSlider = false;
 
     audio.addEventListener("timeupdate", () => {
-	if (mouseDownOnSlider || !audio.duration) {
-	    return;
-	}
-	saveElementTime()
+        if (mouseDownOnSlider || !audio.duration) {
+            return;
+        }
+        saveElementTime();
     });
     audio.addEventListener("ended", () => {
-	pause();
-	if (currentTrackIdx < trackEls.length - 1) {
-	    setTrack(currentTrackIdx + 1);
-	    play();
-	}
+        pause();
+        if (currentTrackIdx < trackEls.length - 1) {
+            setTrack(currentTrackIdx + 1);
+            play();
+        }
     });
     audio.addEventListener("pause", () => {
-	trackEls[currentTrackIdx].classList.remove("playing");
+        trackEls[currentTrackIdx].classList.remove("playing");
     });
     audio.addEventListener("play", () => {
-	trackEls[currentTrackIdx].classList.add("playing");
-	trackEls[currentTrackIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        play();
+        trackEls[currentTrackIdx].classList.add("playing");
+        trackEls[currentTrackIdx].scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
     });
 
-
-    if ('mediaSession' in navigator) {
-	// mediaSession is flaky in Chrome https://bugs.chromium.org/p/chromium/issues/detail?id=1337536
-	navigator.mediaSession.setActionHandler('previoustrack', prev);
-	navigator.mediaSession.setActionHandler('nexttrack', next);
-	navigator.mediaSession.setActionHandler('pause', pause);
-	navigator.mediaSession.setActionHandler('play', play);
-	navigator.mediaSession.setActionHandler('seekto', function (data) {
-	    audio.currentTime = data.seekTime;
-	});
+    if ("mediaSession" in navigator) {
+        // mediaSession is flaky in Chrome https://bugs.chromium.org/p/chromium/issues/detail?id=1337536
+        navigator.mediaSession.setActionHandler("previoustrack", prev);
+        navigator.mediaSession.setActionHandler("nexttrack", next);
+        navigator.mediaSession.setActionHandler("pause", pause);
+        navigator.mediaSession.setActionHandler("play", play);
+        navigator.mediaSession.setActionHandler("seekto", function (data) {
+            audio.currentTime = data.seekTime;
+        });
     }
 
-    trackEls.forEach(el => el.addEventListener("click", event => {
-	const trackEl = event.currentTarget;
-	const targetIdx = parseInt(trackEl.dataset.index, 10);
-	if (targetIdx == currentTrackIdx) {
-	    if (audio.paused) {
-		audio.play();
-	    } else {
-		audio.pause();
-	    }
-	    return;
-	}
-	pause();
-	setTrack(targetIdx);
-	play();
-    }));
-    
-    titleEl.addEventListener("click", event => {
-	if (audio.paused) {
-	    audio.play();
-	} else {
-	    audio.pause();
-	}
-    })
+    trackEls.forEach((el) =>
+        el.addEventListener("click", (event) => {
+            const trackEl = event.currentTarget;
+            const targetIdx = parseInt(trackEl.dataset.index, 10);
+            if (targetIdx == currentTrackIdx) {
+                if (audio.paused) {
+                    audio.play();
+                } else {
+                    audio.pause();
+                }
+                return;
+            }
+            pause();
+            setTrack(targetIdx);
+            play();
+        }),
+    );
+
+    titleEl.addEventListener("click", (event) => {
+        if (audio.paused) {
+            audio.play();
+        } else {
+            audio.pause();
+        }
+    });
 }
 
 window.addEventListener("DOMContentLoaded", initPlayer);

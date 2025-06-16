@@ -2,6 +2,7 @@ package server
 
 import (
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ginqi7/bsimp/internal/auth"
@@ -24,6 +25,7 @@ type Server struct {
 	mediaLib      *media.MediaLibrary
 	authLib       *auth.AuthLibrary
 	tmpl          *template.Template
+	mediaProgress *media.MediaProgress
 	staticVersion string
 }
 
@@ -131,6 +133,34 @@ func (s *Server) StreamHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
+func (s *Server) ProgressHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Set the Content-Type header to indicate that the response will be JSON
+	w.Header().Set("Content-Type", "application/json")
+
+	// 1. Parse the incoming JSON
+	var progressEvent media.ProgressEvent
+	// Use json.NewDecoder to read and decode the JSON from the request body
+	err := json.NewDecoder(r.Body).Decode(&progressEvent)
+	if err != nil {
+		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
+		slog.Error(fmt.Sprintf("Failed to decode JSON %s", err))
+		return
+	}
+	respData := s.mediaProgress.HandleEvent(progressEvent)
+
+	// Use json.NewEncoder to encode and write the JSON to the response writer
+	err = json.NewEncoder(w).Encode(&respData)
+	if err != nil {
+		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (s *Server) AudioHandler(w http.ResponseWriter, r *http.Request) {
 	// Open Audio File
 	audioFile, err := s.mediaLib.OpenFile(r.URL.Path)
@@ -209,11 +239,12 @@ func StartServer(mediaLib *media.MediaLibrary, authLib *auth.AuthLibrary, addr s
 	if err != nil {
 		return err
 	}
-
 	mux := http.NewServeMux()
 
 	staticVersion := fmt.Sprintf("%x", rand.Uint64())
+
 	staticFS, err := fs.Sub(embedFS, "static")
+
 	if err != nil {
 		return err
 	}
@@ -221,7 +252,11 @@ func StartServer(mediaLib *media.MediaLibrary, authLib *auth.AuthLibrary, addr s
 	mux.Handle(staticPath, DisableFileListing(http.StripPrefix(staticPath, http.FileServer(http.FS(staticFS)))))
 
 	s := Server{
-		mediaLib:      mediaLib,
+		mediaLib: mediaLib,
+		mediaProgress: &media.MediaProgress{
+			Track: make(map[string]int),             // Initialize the Track map
+			Time:  make(map[string]map[int]float64), // Initialize the Time map
+		},
 		authLib:       authLib,
 		tmpl:          tmpl,
 		staticVersion: staticVersion,
@@ -229,6 +264,7 @@ func StartServer(mediaLib *media.MediaLibrary, authLib *auth.AuthLibrary, addr s
 	mux.Handle("/library/", http.StripPrefix("/library/", s.ValidatePath(NormalizePath(s.ListingHandler))))
 	mux.Handle("/stream/", http.StripPrefix("/stream/", s.ValidatePath(NormalizePath(s.StreamHandler))))
 	mux.Handle("/audio/", http.StripPrefix("/audio/", s.ValidatePath(NormalizePath(s.AudioHandler))))
+	mux.Handle("/progress/", http.StripPrefix("/progress/", s.ValidatePath(NormalizePath(s.ProgressHandler))))
 	mux.Handle("/login_page/", http.StripPrefix("/login_page/", NormalizePath(s.LoginPage)))
 	mux.Handle("/login", http.StripPrefix("/login", NormalizePath(s.LoginHandler)))
 	mux.Handle("/", http.RedirectHandler("/library/", http.StatusMovedPermanently))
