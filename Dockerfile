@@ -14,10 +14,10 @@ RUN go mod download
 COPY . .
 
 # Build App
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server
 
 # Using alpine as runtime
-FROM alpine:latest  
+FROM alpine:latest
 
 # Copy the built executable file from the builder stage
 COPY --from=builder /app/main /main
